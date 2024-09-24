@@ -8,7 +8,8 @@ nlp = spacy.load('en_core_web_sm')
 menu_file_path = 'In N Out Menu.csv'
 menu_data = pd.read_csv(menu_file_path)
 
-# Convert the menu data into a dictionary for easy access
+# Normalize menu items: Convert to lowercase and replace dashes with spaces
+menu_data['Menu Item'] = menu_data['Menu Item'].str.lower().str.replace('-', ' ')
 menu_dict = dict(zip(menu_data['Menu Item'], menu_data['Price']))
 
 # Dictionary for converting written numbers to integers
@@ -21,7 +22,7 @@ word_to_num = {
 def show_menu():
     print("Welcome to In-N-Out! Here's our menu:")
     for item, price in menu_dict.items():
-        print(f"{item}: ${price:.2f}")
+        print(f"{item.title()}: ${price:.2f}")  # Display with title-case
 
 # Function to parse the order using NLP
 def parse_order(user_input):
@@ -30,6 +31,9 @@ def parse_order(user_input):
     total = 0
     quantity = 1  # Default quantity if not specified
 
+    # Normalize user input: Convert to lowercase and replace dashes with spaces
+    user_input_lower = user_input.lower().replace('-', ' ')
+
     # Handle numbers and written numbers
     for token in doc:
         if token.like_num:  # If token is a number (e.g., '1')
@@ -37,11 +41,10 @@ def parse_order(user_input):
         elif token.text.lower() in word_to_num:  # If token is a written number (e.g., 'one')
             quantity = word_to_num[token.text.lower()]
 
-    # Match multi-word menu items
-    user_input_lower = user_input.lower()
+    # Match menu items (ignoring case and dashes)
     for item in menu_dict.keys():
-        if item.lower() in user_input_lower:
-            order.append((item, quantity))
+        if item in user_input_lower:
+            order.append((item.title(), quantity))  # Store with title-case for display
             total += menu_dict[item] * quantity
             quantity = 1  # Reset quantity for next item
 
@@ -67,7 +70,7 @@ def take_order():
 def display_order(order, total):
     print("\nHere's your final order:")
     for item, quantity in order:
-        print(f"- {quantity} x {item}: ${menu_dict[item]:.2f} each")
+        print(f"- {quantity} x {item}: ${menu_dict[item.lower()]:.2f} each")
     print(f"Your total is: ${total:.2f}")
     print("Thank you for ordering at In-N-Out!")
 
