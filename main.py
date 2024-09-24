@@ -30,17 +30,19 @@ def parse_order(user_input):
     total = 0
     quantity = 1  # Default quantity if not specified
 
-    # Check for quantities and menu items
+    # Handle numbers and written numbers
     for token in doc:
-        # Handle numbers and written numbers
         if token.like_num:  # If token is a number (e.g., '1')
             quantity = int(token.text)
         elif token.text.lower() in word_to_num:  # If token is a written number (e.g., 'one')
             quantity = word_to_num[token.text.lower()]
-        elif token.text.lower() in [item.lower() for item in menu_dict.keys()]:  # If token matches a menu item
-            menu_item = next(item for item in menu_dict.keys() if item.lower() == token.text.lower())
-            order.append((menu_item, quantity))
-            total += menu_dict[menu_item] * quantity
+
+    # Match multi-word menu items
+    user_input_lower = user_input.lower()
+    for item in menu_dict.keys():
+        if item.lower() in user_input_lower:
+            order.append((item, quantity))
+            total += menu_dict[item] * quantity
             quantity = 1  # Reset quantity for next item
 
     return order, total
