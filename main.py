@@ -8,8 +8,9 @@ nlp = spacy.load('en_core_web_sm')
 menu_file_path = 'In N Out Menu.csv'
 menu_data = pd.read_csv(menu_file_path)
 
-# Normalize menu items: Convert to lowercase and replace dashes with spaces
+# Normalize menu items: Convert to lowercase, replace dashes with spaces, and merge specific items
 menu_data['Menu Item'] = menu_data['Menu Item'].str.lower().str.replace('-', ' ')
+menu_data['Menu Item'] = menu_data['Menu Item'].replace({'cheese burger': 'cheeseburger'})  # Merge 'Cheese Burger'
 menu_dict = dict(zip(menu_data['Menu Item'], menu_data['Price']))
 
 # Dictionary for converting written numbers to integers
