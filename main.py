@@ -10,7 +10,10 @@ menu_data = pd.read_csv(menu_file_path)
 
 # Normalize menu items: Convert to lowercase, replace dashes with spaces, and merge specific items
 menu_data['Menu Item'] = menu_data['Menu Item'].str.lower().str.replace('-', ' ')
-menu_data['Menu Item'] = menu_data['Menu Item'].replace({'cheese burger': 'cheeseburger'})  # Merge 'Cheese Burger'
+menu_data['Menu Item'] = menu_data['Menu Item'].replace({
+    'cheese burger': 'cheeseburger',  # Merge 'Cheese Burger'
+    'shakes': 'shake'                 # Change 'Shakes' to 'Shake'
+})
 menu_dict = dict(zip(menu_data['Menu Item'], menu_data['Price']))
 
 # Dictionary for converting written numbers to integers
@@ -25,7 +28,7 @@ def show_menu():
     for item, price in menu_dict.items():
         print(f"{item.title()}: ${price:.2f}")  # Display with title-case
 
-# Function to parse the order using NLP
+# Corrected parse_order function
 def parse_order(user_input):
     doc = nlp(user_input)
     order = []
@@ -35,12 +38,24 @@ def parse_order(user_input):
     # Normalize user input: Convert to lowercase and replace dashes with spaces
     user_input_lower = user_input.lower().replace('-', ' ')
 
+    # Handle plural forms in user input
+    user_input_lower = user_input_lower.replace('shakes', 'shake')
+
     # Handle numbers and written numbers
     for token in doc:
-        if token.like_num:  # If token is a number (e.g., '1')
-            quantity = int(token.text)
-        elif token.text.lower() in word_to_num:  # If token is a written number (e.g., 'one')
-            quantity = word_to_num[token.text.lower()]
+        token_lower = token.text.lower()
+        if token_lower in word_to_num:
+            quantity = word_to_num[token_lower]
+        elif token.like_num:
+            try:
+                quantity = int(token.text)
+            except ValueError:
+                # Handle number words that are recognized as numbers but can't be converted directly
+                if token_lower in word_to_num:
+                    quantity = word_to_num[token_lower]
+                else:
+                    print(f"Cannot interpret quantity '{token.text}'. Using default quantity of 1.")
+                    quantity = 1
 
     # Match menu items (ignoring case and dashes)
     for item in menu_dict.keys():
@@ -51,7 +66,7 @@ def parse_order(user_input):
 
     return order, total
 
-# Function to take the order from the user
+# Modified take_order function to repeat back the order
 def take_order():
     order = []
     total = 0
@@ -63,7 +78,14 @@ def take_order():
             parsed_order, parsed_total = parse_order(user_input)
             order.extend(parsed_order)
             total += parsed_total
-            print(f"Added to your order. Total so far: ${total:.2f}")
+            # Repeat back the items just added
+            if parsed_order:
+                print("Added to your order:")
+                for item, quantity in parsed_order:
+                    print(f"- {quantity} x {item}")
+            else:
+                print("Sorry, we couldn't find any items from the menu in your order.")
+            print(f"Total so far: ${total:.2f}")
 
     return order, total
 
