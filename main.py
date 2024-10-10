@@ -66,9 +66,9 @@ def parse_order(user_input):
 
     return order, total
 
-# Modified take_order function to repeat back the order
+# Modified take_order function to accumulate order totals
 def take_order():
-    order = []
+    order = {}  # Use a dictionary to accumulate item quantities
     total = 0
     while True:
         user_input = input("What would you like to order? (type 'done' to finish): ")
@@ -76,12 +76,17 @@ def take_order():
             break
         else:
             parsed_order, parsed_total = parse_order(user_input)
-            order.extend(parsed_order)
+            # Update the order dictionary
+            for item, quantity in parsed_order:
+                if item in order:
+                    order[item] += quantity
+                else:
+                    order[item] = quantity
             total += parsed_total
-            # Repeat back the items just added
+            # Repeat back the cumulative order
             if parsed_order:
-                print("Added to your order:")
-                for item, quantity in parsed_order:
+                print("Your current order:")
+                for item, quantity in order.items():
                     print(f"- {quantity} x {item}")
             else:
                 print("Sorry, we couldn't find any items from the menu in your order.")
@@ -92,7 +97,7 @@ def take_order():
 # Function to display the final order and total price
 def display_order(order, total):
     print("\nHere's your final order:")
-    for item, quantity in order:
+    for item, quantity in order.items():
         print(f"- {quantity} x {item}: ${menu_dict[item.lower()]:.2f} each")
     print(f"Your total is: ${total:.2f}")
     print("Thank you for ordering at In-N-Out!")
