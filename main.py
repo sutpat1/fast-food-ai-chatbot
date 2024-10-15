@@ -1,182 +1,206 @@
+from flask import Flask, request, render_template_string, session, redirect, url_for
 import spacy
 import pandas as pd
 import re
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Replace with a secure secret key
 
 # Load the spaCy model for NLP processing
 nlp = spacy.load('en_core_web_sm')
 
 # Load the menu data from CSV file
-menu_file_path = 'In N Out Menu.csv'
-menu_data = pd.read_csv(menu_file_path)
+menu_data = pd.read_csv('In N Out Menu.csv')
 
-# Normalize menu items: Convert to lowercase, replace dashes with spaces
-menu_data['Menu Item'] = menu_data['Menu Item'].str.lower().str.replace('-', ' ')
-
-# Replace specific items for consistency
-menu_data['Menu Item'] = menu_data['Menu Item'].replace({
-    'cheese burger': 'cheeseburger',      # Merge 'Cheese Burger'
-    'shakes': 'shake',                    # Change 'Shakes' to 'Shake'
-    'number 1 meal': 'number one meal',   # Change 'Number 1 Meal' to 'Number one meal'
-    'number 2 meal': 'number two meal',
-    'number 3 meal': 'number three meal',
-})
-
+# Normalize menu items: Convert to lowercase
+menu_data['Menu Item'] = menu_data['Menu Item'].str.lower()
 menu_dict = dict(zip(menu_data['Menu Item'], menu_data['Price']))
 
-# Dictionaries for converting written numbers to integers and digits to words
+# Word to number mapping
 word_to_num = {
-    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
-    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10
+    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
+    "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10
 }
 
-num_to_word = {str(value): key for key, value in word_to_num.items()}
-
-# Function to display the menu
-def show_menu():
-    print("Welcome to In-N-Out! Here's our menu:")
-    for item, price in menu_dict.items():
-        print(f"{item.title()}: ${price:.2f}")  # Display with title-case
-
-# Function to replace numerals in text with words
+# Function to replace numerals with words
 def replace_numerals_with_words(text):
-    # Replace digits with words using regex
-    def replace_match(match):
+    num_to_word = {str(value): key for key, value in word_to_num.items()}
+    def replace(match):
         return num_to_word.get(match.group(0), match.group(0))
-    return re.sub(r'\b\d+\b', replace_match, text)
+    return re.sub(r'\b\d+\b', replace, text)
 
-# Corrected parse_order function
+# Function to get menu items
+def get_menu_items():
+    menu_items = []
+    for item, price in menu_dict.items():
+        menu_items.append({'name': item.title(), 'price': f"${price:.2f}"})
+    return menu_items
+
+# Function to parse and process the order
 def parse_order(user_input):
-    # Normalize user input: Convert to lowercase and replace dashes with spaces
-    user_input_lower = user_input.lower().replace('-', ' ')
-
-    # Replace numerals with words in user input
-    user_input_lower = replace_numerals_with_words(user_input_lower)
-
-    # Handle plural forms in user input
-    user_input_lower = user_input_lower.replace('shakes', 'shake')
-
-    # Process with spaCy NLP
-    doc = nlp(user_input_lower)
-    order = []
-    total = 0
-    quantity = 1  # Default quantity if not specified
-
-    # Handle numbers and written numbers
-    for token in doc:
-        token_lower = token.text.lower()
-        if token_lower in word_to_num:
-            quantity = word_to_num[token_lower]
-        elif token.like_num:
-            try:
-                quantity = int(token.text)
-            except ValueError:
-                quantity = 1
-
-    # Match menu items (ignoring case)
-    for item in menu_dict.keys():
-        if item in user_input_lower:
-            order.append((item.title(), quantity))  # Store with title-case for display
-            total += menu_dict[item] * quantity
-            quantity = 1  # Reset quantity for next item
-
-    return order, total
-
-# Function to parse removal requests
-def parse_removal(user_input):
-    # Similar to parse_order, but for removal
-    user_input_lower = user_input.lower().replace('-', ' ')
-    user_input_lower = replace_numerals_with_words(user_input_lower)
-    user_input_lower = user_input_lower.replace('shakes', 'shake')
-
-    doc = nlp(user_input_lower)
-    removal_items = []
+    user_input = user_input.lower()
+    user_input = replace_numerals_with_words(user_input)
+    doc = nlp(user_input)
+    found_items = []
     quantity = 1
 
+    # Extract quantities and items
     for token in doc:
-        token_lower = token.text.lower()
-        if token_lower in word_to_num:
-            quantity = word_to_num[token_lower]
-        elif token.like_num:
+        if token.like_num:
             try:
                 quantity = int(token.text)
             except ValueError:
-                quantity = 1
+                quantity = word_to_num.get(token.text.lower(), 1)
+        elif token.text in word_to_num:
+            quantity = word_to_num[token.text]
+        elif token.text in menu_dict:
+            found_items.append((token.text, quantity))
+            quantity = 1  # Reset quantity after finding an item
 
-    for item in menu_dict.keys():
-        if item in user_input_lower:
-            removal_items.append((item.title(), quantity))
-            quantity = 1
-
-    return removal_items
-
-# Modified take_order function to handle removal requests
-def take_order():
-    order = {}  # Use a dictionary to accumulate item quantities
-    total = 0
-    while True:
-        user_input = input("What would you like to order? (type 'done' to finish): ")
-        user_input_lower = user_input.lower()
-        if user_input_lower == 'done':
-            break
-        elif 'remove' in user_input_lower or 'cancel' in user_input_lower:
-            # Handle removal
-            removal_items = parse_removal(user_input)
-            if removal_items:
-                for item, quantity in removal_items:
-                    if item in order:
-                        if order[item] > quantity:
-                            order[item] -= quantity
-                            total -= menu_dict[item.lower()] * quantity
-                            print(f"Removed {quantity} x {item} from your order.")
-                        elif order[item] == quantity:
-                            order.pop(item)
-                            total -= menu_dict[item.lower()] * quantity
-                            print(f"Removed {quantity} x {item} from your order.")
-                        else:
-                            print(f"You have only {order[item]} x {item} in your order. Removing all of them.")
-                            total -= menu_dict[item.lower()] * order[item]
-                            order.pop(item)
-                    else:
-                        print(f"You don't have any {item} in your order to remove.")
+    if found_items:
+        for item, qty in found_items:
+            # Update session data
+            if 'order' not in session:
+                session['order'] = {}
+            if item in session['order']:
+                session['order'][item] += qty
             else:
-                print("Sorry, we couldn't find any items from the menu to remove in your request.")
-        else:
-            # Handle adding items
-            parsed_order, parsed_total = parse_order(user_input)
-            # Update the order dictionary
-            for item, quantity in parsed_order:
-                if item in order:
-                    order[item] += quantity
-                else:
-                    order[item] = quantity
-            total += parsed_total
-        # Display the current order
-        if order:
-            print("Your current order:")
-            for item, quantity in order.items():
-                print(f"- {quantity} x {item}")
-        else:
-            print("Your order is currently empty.")
-        print(f"Total so far: ${total:.2f}")
-
-    return order, total
-
-# Function to display the final order and total price
-def display_order(order, total):
-    print("\nHere's your final order:")
-    if order:
-        for item, quantity in order.items():
-            print(f"- {quantity} x {item}: ${menu_dict[item.lower()]:.2f} each")
-        print(f"Your total is: ${total:.2f}")
-        print("Thank you for ordering at In-N-Out!")
+                session['order'][item] = qty
     else:
-        print("You didn't order anything. Thank you for visiting In-N-Out!")
+        return "Sorry, I didn't understand your order."
 
-# Main chatbot function
-def chatbot():
-    show_menu()
-    order, total = take_order()
-    display_order(order, total)
+    return ""
 
-# Run the chatbot
-chatbot()
+# Flask routes
+@app.route('/')
+def index():
+    session.clear()
+    session['order'] = {}
+    session['total'] = 0.0
+    menu_items = get_menu_items()
+    # HTML template as a string
+    index_html = '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>In-N-Out Chatbot</title>
+    </head>
+    <body>
+        <div style="text-align: center;">
+            <img src="{{ url_for('static', filename='InNOut_2021_logo.svg.png') }}" alt="In-N-Out Logo" width="200">
+            <h1>Welcome to In-N-Out!</h1>
+            <h2>Here's our menu:</h2>
+            <ul style="list-style-type: none;">
+                {% for item in menu %}
+                    <li>{{ item.name }}: {{ item.price }}</li>
+                {% endfor %}
+            </ul>
+            <a href="{{ url_for('chat') }}">Start Ordering</a>
+        </div>
+    </body>
+    </html>
+    '''
+    return render_template_string(index_html, menu=menu_items)
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    if 'order' not in session:
+        session['order'] = {}
+    response = ""
+    if request.method == 'POST':
+        if 'complete_order' in request.form:
+            return redirect(url_for('summary'))
+        user_input = request.form['message']
+        response = parse_order(user_input)
+        if response == "":
+            response = "Item(s) added to your order."
+    # Generate the current order summary
+    order_summary = ""
+    total_price = 0
+    if 'order' in session and session['order']:
+        order_summary += "<h3>Your current order:</h3><ul style='list-style-type: none;'>"
+        for item, qty in session['order'].items():
+            item_price = menu_dict[item] * qty
+            total_price += item_price
+            order_summary += f"<li>{qty} x {item.title()} - ${item_price:.2f}</li>"
+        order_summary += f"</ul><p>Total: ${total_price:.2f}</p>"
+    else:
+        order_summary = "<p>Your order is currently empty.</p>"
+    # HTML template as a string
+    chat_html = '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>In-N-Out Chatbot</title>
+    </head>
+    <body>
+        <div style="text-align: center;">
+            <img src="{{ url_for('static', filename='InNOut_2021_logo.svg.png') }}" alt="In-N-Out Logo" width="200">
+            <h1>In-N-Out Ordering Chatbot</h1>
+            <div>
+                {% if response %}
+                    <p>{{ response|safe }}</p>
+                {% endif %}
+            </div>
+            <div>
+                {{ order_summary|safe }}
+            </div>
+            <form method="post">
+                <input type="text" name="message" placeholder="Type your message here..." required size="50">
+                <input type="submit" value="Send">
+                <input type="submit" name="complete_order" value="Complete Order">
+            </form>
+        </div>
+    </body>
+    </html>
+    '''
+    return render_template_string(chat_html, response=response, order_summary=order_summary)
+
+@app.route('/summary')
+def summary():
+    # Generate the final order summary
+    if 'order' not in session or not session['order']:
+        return render_template_string('''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Order Summary</title>
+            </head>
+            <body>
+                <div style="text-align: center;">
+                    <img src="{{ url_for('static', filename='InNOut_2021_logo.svg.png') }}" alt="In-N-Out Logo" width="200">
+                    <h1>You haven't ordered anything yet.</h1>
+                    <a href="{{ url_for('chat') }}">Go back to order</a>
+                </div>
+            </body>
+            </html>
+        ''')
+    else:
+        order_summary = "<h3>Your final order:</h3><ul style='list-style-type: none;'>"
+        total_price = 0
+        for item, qty in session['order'].items():
+            item_price = menu_dict[item] * qty
+            total_price += item_price
+            order_summary += f"<li>{qty} x {item.title()} - ${item_price:.2f}</li>"
+        order_summary += f"</ul><h3>Total: ${total_price:.2f}</h3>"
+        # Clear the session after showing the summary
+        session.clear()
+        return render_template_string('''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Order Summary</title>
+            </head>
+            <body>
+                <div style="text-align: center;">
+                    <img src="{{ url_for('static', filename='InNOut_2021_logo.svg.png') }}" alt="In-N-Out Logo" width="200">
+                    {{ order_summary|safe }}
+                    <p>Thank you for your order!</p>
+                    <a href="{{ url_for('index') }}">Start a new order</a>
+                </div>
+            </body>
+            </html>
+        ''', order_summary=order_summary)
+
+if __name__ == '__main__':
+    app.run(debug=True)
