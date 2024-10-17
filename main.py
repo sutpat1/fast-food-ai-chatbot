@@ -146,7 +146,6 @@ def parse_removal(user_input):
     return removal_items
 
 
-# Helper functions to handle additions and removals
 def handle_addition(parsed_order):
     response = ""
     if parsed_order:
@@ -157,11 +156,11 @@ def handle_addition(parsed_order):
                 session['order'][item] += quantity
             else:
                 session['order'][item] = quantity
+            session.modified = True  # Inform Flask that the session has been modified
         response += "Item(s) added to your order."
     else:
         response += "Sorry, we couldn't find any items from the menu in your order."
     return response
-
 
 def handle_removal(removal_items):
     response = ""
@@ -177,11 +176,13 @@ def handle_removal(removal_items):
                 else:
                     response += f"You have only {session['order'][item]} x {item.title()} in your order. Removing all of them.<br>"
                     session['order'].pop(item)
+                session.modified = True  # Inform Flask that the session has been modified
             else:
                 response += f"You don't have any {item.title()} in your order to remove.<br>"
     else:
         response += "Sorry, we couldn't find any items from the menu to remove in your request."
     return response
+
 
 
 # Flask routes
