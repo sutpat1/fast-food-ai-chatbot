@@ -36,7 +36,8 @@ for item in menu_dict.keys():
 # Dictionaries for converting written numbers to integers and digits to words
 word_to_num = {
     "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
-    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "a": 1, "an": 1  # Include 'a' and 'an' to map to 1
 }
 
 num_to_word = {str(value): key for key, value in word_to_num.items()}
