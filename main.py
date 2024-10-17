@@ -72,7 +72,7 @@ def parse_order(user_input):
         quantity = 1
         item_name = None
 
-        tokens = [token for token in chunk if not token.is_stop]
+        tokens = [token for token in chunk]
         if len(tokens) == 0:
             continue
 
@@ -116,7 +116,7 @@ def parse_removal(user_input):
         quantity = 1
         item_name = None
 
-        tokens = [token for token in chunk if not token.is_stop]
+        tokens = [token for token in chunk]
         if len(tokens) == 0:
             continue
 
