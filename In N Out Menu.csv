@@ -1,16 +1,16 @@
-Menu Item,Price
-Double-Double,5.3
-Cheese Burger,3.7
-Hamburger,3.3
-French Fries,2.15
-Shakes,2.9
-Small Drink,1.95
-Medium Drink,2.1
-Large Drink,2.3
-X-Large Drink,2.5
-Milk,0.99
-Hot Cocoa,2.1
-Coffee,1.35
-Number 1 Meal,9.55
-Number 2 Meal,7.95
-Number 3 Meal,7.55
+Menu Item,Price,Ingredients
+Double-Double,5.3,"2x Beef Patty, 2x Cheese, Lettuce, Onions, Tomato, Spread, Pickles"
+Cheese Burger,3.7,"Beef Patty, Cheese, Lettuce, Onions, Tomato, Spread, Pickles"
+Hamburger,3.3,"Beef Patty, Lettuce, Onions, Tomato, Spread, Pickles"
+French Fries,2.15,"Potatoes, Salt"
+Shakes,2.9,"Milk, Ice Cream"
+Small Drink,1.95,"Coke, Diet Coke, Pepsi, Root Beer, Lemonade, 7Up"
+Medium Drink,2.1,"Coke, Diet Coke, Pepsi, Root Beer, Lemonade, 7Up"
+Large Drink,2.3,"Coke, Diet Coke, Pepsi, Root Beer, Lemonade, 7Up"
+X-Large Drink,2.5,"Coke, Diet Coke, Pepsi, Root Beer, Lemonade, 7Up"
+Milk,0.99,Milk
+Hot Cocoa,2.1,"Milk, Chocolate"
+Coffee,1.35,"Milk, Coffee"
+Number 1 Meal,9.55,"Double Double, French Fries, Medium Drink"
+Number 2 Meal,7.95,"Cheeseburger, French Fries, Medium Drink"
+Number 3 Meal,7.55,"Hamburger, French Fries, Medium Drink"
