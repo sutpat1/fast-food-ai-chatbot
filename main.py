@@ -4,18 +4,18 @@ import pandas as pd
 import re
 
 app = Flask(__name__)
-app.secret_key = 'your_secure_secret_key'  # Replace with a secure secret key
+app.secret_key = 'sua_chave_secreta_segura_aqui'  # Substitua por uma chave secreta segura
 
-# Load the spaCy model for NLP processing
+# Carrega o modelo spaCy para processamento de NLP
 nlp = spacy.load('en_core_web_sm')
 
-# Load the menu data from CSV file
+# Carrega os dados do menu a partir do arquivo CSV
 menu_data = pd.read_csv('In N Out Menu.csv')
 
-# Normalize menu items: Convert to lowercase, replace dashes with spaces
+# Normaliza os itens do menu: converte para minúsculas e substitui hífens por espaços
 menu_data['Menu Item'] = menu_data['Menu Item'].str.lower().str.replace('-', ' ')
 
-# Replace specific items for consistency
+# Substitui itens específicos para consistência
 menu_data['Menu Item'] = menu_data['Menu Item'].replace({
     'cheese burger': 'cheeseburger',
     'shakes': 'shake',
@@ -26,20 +26,19 @@ menu_data['Menu Item'] = menu_data['Menu Item'].replace({
 
 menu_dict = dict(zip(menu_data['Menu Item'], menu_data['Price']))
 
-# Create a mapping from lemmatized menu items to canonical menu item names
+# Cria um mapeamento de itens do menu lematizados para os nomes originais
 lemmatized_menu_items = {}
 for item in menu_dict.keys():
     item_doc = nlp(item)
     lemmatized_item = ' '.join([token.lemma_ for token in item_doc])
     lemmatized_menu_items[lemmatized_item] = item
 
-# Create a dictionary mapping menu items to their ingredients
-# Split the ingredients by comma, strip any whitespace, and lemmatize
+# Cria um dicionário mapeando itens do menu para seus ingredientes
 ingredients_dict = {}
 for index, row in menu_data.iterrows():
     item = row['Menu Item']
     ingredients = [ingredient.strip().lower() for ingredient in row['Ingredients'].split(',')]
-    # Lemmatize each ingredient to ensure consistency
+    # Lematiza cada ingrediente para garantir consistência
     lemmatized_ingredients = []
     for ingredient in ingredients:
         doc = nlp(ingredient)
@@ -47,30 +46,30 @@ for index, row in menu_data.iterrows():
         lemmatized_ingredients.append(lemmatized)
     ingredients_dict[item] = lemmatized_ingredients
 
-# Dictionaries for converting written numbers to integers and digits to words
+# Dicionários para converter números escritos em inteiros e dígitos em palavras
 word_to_num = {
     "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
     "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
-    "a": 1, "an": 1  # Include 'a' and 'an' to map to 1
+    "a": 1, "an": 1  # Inclui 'a' e 'an' para mapear para 1
 }
 
 num_to_word = {str(value): key for key, value in word_to_num.items()}
 
-# Function to replace numerals with words
+# Função para substituir numerais por palavras
 def replace_numerals_with_words(text):
     def replace_match(match):
         return num_to_word.get(match.group(0), match.group(0))
 
     return re.sub(r'\b\d+\b', replace_match, text)
 
-# Function to get menu items
+# Função para obter itens do menu
 def get_menu_items():
     menu_items = []
     for item, price in menu_dict.items():
         menu_items.append({'name': item.title(), 'price': f"${price:.2f}"})
     return menu_items
 
-# Function to parse order
+# Função para parsear pedidos
 def parse_order(user_input):
     user_input_lower = user_input.lower().replace('-', ' ')
     user_input_lower = replace_numerals_with_words(user_input_lower)
@@ -114,7 +113,7 @@ def parse_order(user_input):
 
     return order, total
 
-# Function to parse removal of entire items
+# Função para parsear remoções de itens
 def parse_removal(user_input):
     user_input_lower = user_input.lower().replace('-', ' ')
     user_input_lower = replace_numerals_with_words(user_input_lower)
@@ -156,56 +155,56 @@ def parse_removal(user_input):
 
     return removal_items
 
-# Function to parse ingredient modifications
+# Função para parsear modificações nos ingredientes
 def parse_modifications(user_input, parsed_order):
     """
-    Parses the user input for ingredient modifications like 'without onions' or 'extra cheese'.
-    Returns a dictionary mapping item names to their modifications.
+    Parseia a entrada do usuário para modificações nos ingredientes, como 'sem cebolas' ou 'extra queijo'.
+    Retorna um dicionário mapeando os nomes dos itens para suas modificações.
     """
     modifications = {}
     doc = nlp(user_input.lower())
 
-    # Iterate through sentences
+    # Itera pelas sentenças
     for sent in doc.sents:
-        # Find 'without' and 'extra' modifiers
+        # Procura por modificadores como 'sem' e 'extra'
         for token in sent:
             if token.text == 'without':
-                # Get the next token as the ingredient to remove
+                # Pega o próximo token como ingrediente a remover
                 try:
                     next_token = token.nbor(1)
                     if next_token.pos_ == 'NOUN':
                         ingredient = next_token.lemma_
-                        # Assign to the last item in parsed_order
+                        # Atribui ao último item em parsed_order
                         if parsed_order:
-                            last_item = parsed_order[-1][0]  # get the item name
+                            last_item = parsed_order[-1][0]  # nome do item
                             modifications.setdefault(last_item, {}).setdefault('remove', []).append(ingredient)
                 except IndexError:
-                    continue  # No token after 'without', skip
+                    continue  # Nenhum token após 'without', pula
             elif token.text in ['extra', 'add', 'with']:
-                # Get the next token as the ingredient to add
+                # Pega o próximo token como ingrediente a adicionar
                 try:
                     next_token = token.nbor(1)
                     if next_token.pos_ == 'NOUN':
                         ingredient = next_token.lemma_
                         if token.text in ['add', 'with']:
-                            # Assign to the last item in parsed_order
+                            # Atribui ao último item em parsed_order
                             if parsed_order:
                                 last_item = parsed_order[-1][0]
                                 modifications.setdefault(last_item, {}).setdefault('add', []).append(ingredient)
                         elif token.text == 'extra':
-                            # Assign to the last item in parsed_order
+                            # Atribui ao último item em parsed_order
                             if parsed_order:
                                 last_item = parsed_order[-1][0]
                                 modifications.setdefault(last_item, {}).setdefault('add', []).append(ingredient)
                 except IndexError:
-                    continue  # No token after modifier, skip
+                    continue  # Nenhum token após o modificador, pula
 
     return modifications
 
-# Function to get current order summary
+# Função para obter o resumo atual do pedido
 def get_current_order_summary():
     if 'order' not in session or not session['order']:
-        return "Your order is currently empty."
+        return "🛒 Your order is currently empty."
 
     summary = "<h4>Your current order:</h4><ul style='list-style-type: none;'>"
     total = 0
@@ -216,7 +215,7 @@ def get_current_order_summary():
         item_price = menu_dict[item] * qty
         total += item_price
 
-        # Display item with modifications
+        # Exibe o item com modificações
         item_display = f"{qty} x {item.title()}"
         modifications = []
         if additions:
@@ -230,12 +229,12 @@ def get_current_order_summary():
     summary += f"</ul><p><strong>Total: ${total:.2f}</strong></p>"
     return summary
 
-# Function to handle addition of items with modifications
+# Função para lidar com adições de itens com modificações
 def handle_addition(parsed_order, has_modifications):
     """
-    Handles adding items to the order.
-    If has_modifications is False, returns addition messages and order summary.
-    If has_modifications is True, skips addition messages.
+    Lida com a adição de itens ao pedido.
+    Se has_modifications for False, retorna mensagens de adição e resumo do pedido.
+    Se has_modifications for True, pula as mensagens de adição.
     """
     response = ""
     if parsed_order:
@@ -246,7 +245,7 @@ def handle_addition(parsed_order, has_modifications):
                 session['order'][item]['quantity'] += quantity
             else:
                 session['order'][item] = {'quantity': quantity, 'add': [], 'remove': []}
-            session.modified = True  # Inform Flask that the session has been modified
+            session.modified = True  # Informa ao Flask que a sessão foi modificada
 
         if not has_modifications:
             response += "🛒 **Item(s) added to your order.**<br>"
@@ -255,13 +254,12 @@ def handle_addition(parsed_order, has_modifications):
         response += "❓ Sorry, we couldn't find any items from the menu in your order."
     return response
 
-# Function to handle ingredient-related queries
+# Função para lidar com consultas sobre ingredientes
 def handle_ingredient_query(user_input_lower):
     """
-    Handles ingredient-related queries.
+    Lida com consultas relacionadas a ingredientes.
     """
-    # Attempt to extract the menu item from the query
-    # We'll look for the menu item in the query
+    # Tenta extrair o item do menu da consulta
     menu_item = None
     for item in menu_dict.keys():
         if item in user_input_lower:
@@ -269,7 +267,7 @@ def handle_ingredient_query(user_input_lower):
             break
 
     if not menu_item:
-        # If menu item not found in direct match, attempt partial matches
+        # Se o item do menu não for encontrado, tenta correspondências parciais
         for item in menu_dict.keys():
             if item.split()[0] in user_input_lower:
                 menu_item = item
@@ -278,63 +276,48 @@ def handle_ingredient_query(user_input_lower):
     if not menu_item:
         return "❓ I'm sorry, I couldn't identify which menu item you're referring to. Please specify the item."
 
-    # Now, determine if the user is asking for all ingredients or checking for a specific ingredient
-    # Example queries:
-    # - "What are the ingredients of a Cheeseburger?"
-    # - "Does the Hamburger contain onions?"
-
-    # Check for specific ingredient inquiry
+    # Determina se o usuário está perguntando sobre todos os ingredientes ou um ingrediente específico
     specific_ingredient = None
-    # Define patterns for specific ingredient checks
     specific_patterns = ['contains', 'have', 'include', 'has']
     for pattern in specific_patterns:
         if pattern in user_input_lower:
-            # Extract the ingredient after the pattern
-            # e.g., "Does the Hamburger contain onions?" -> ingredient: onions
             pattern_index = user_input_lower.find(pattern)
-            # Get the substring after the pattern
             ingredient_part = user_input_lower[pattern_index + len(pattern):].strip()
-            # Assume the ingredient is the last word or last few words
             ingredient_tokens = ingredient_part.split()
             if ingredient_tokens:
                 specific_ingredient = ingredient_tokens[-1]
-                # Remove punctuation if any
                 specific_ingredient = re.sub(r'[^\w\s]', '', specific_ingredient)
-                # Lemmatize the ingredient
                 doc = nlp(specific_ingredient)
                 specific_ingredient = ' '.join([token.lemma_ for token in doc])
-
             break
 
     if specific_ingredient:
-        # Check if the specific ingredient is in the item's ingredients
+        # Verifica se o ingrediente específico está nos ingredientes do item
         if specific_ingredient in ingredients_dict.get(menu_item, []):
             return f"✅ Yes, the {menu_item.title()} contains {specific_ingredient.title()}."
         else:
             return f"❌ No, the {menu_item.title()} does not contain {specific_ingredient.title()}."
     else:
-        # Provide the full list of ingredients
+        # Fornece a lista completa de ingredientes
         ingredients = ingredients_dict.get(menu_item, [])
         if not ingredients:
             return f"ℹ️ The ingredients for {menu_item.title()} are currently unavailable."
-        # Format the ingredients list
         ingredients_formatted = ', '.join([ingredient.title() for ingredient in ingredients])
         return f"📝 The {menu_item.title()} contains the following ingredients: {ingredients_formatted}."
 
-# Function to handle ingredient modifications
+# Função para lidar com modificações nos itens
 def handle_modifications(modifications):
     response = ""
     for item, mods in modifications.items():
         if item not in session['order']:
             response += f"⚠️ You haven't ordered a {item.title()} to modify.<br>"
             continue
-        # Validate and apply additions
+        # Valida e aplica adições
         additions = mods.get('add', [])
         for add in additions:
-            # Allow multiple additions of the same ingredient
             session['order'][item].setdefault('add', []).append(add)
             response += f"➕ Added {add.title()} to your {item.title()}.<br>"
-        # Validate and apply removals
+        # Valida e aplica remoções
         removals = mods.get('remove', [])
         for remove in removals:
             if remove in ingredients_dict[item]:
@@ -346,7 +329,7 @@ def handle_modifications(modifications):
     response += get_current_order_summary()
     return response
 
-# Function to handle removal of entire items
+# Função para lidar com remoções de itens inteiros
 def handle_removal(removal_items):
     response = ""
     if removal_items:
@@ -361,7 +344,7 @@ def handle_removal(removal_items):
                 else:
                     response += f"⚠️ You have only {session['order'][item]['quantity']} x {item.title()} in your order. Removing all of them.<br>"
                     session['order'].pop(item)
-                session.modified = True  # Inform Flask that the session has been modified
+                session.modified = True  # Informa ao Flask que a sessão foi modificada
             else:
                 response += f"⚠️ You don't have any {item.title()} in your order to remove.<br>"
         response += get_current_order_summary()
@@ -369,92 +352,93 @@ def handle_removal(removal_items):
         response += "❓ Sorry, we couldn't find any items from the menu to remove in your request."
     return response
 
-# Function to initialize messages in session
+# Função para inicializar mensagens na sessão
 def initialize_messages():
     if 'messages' not in session:
         session['messages'] = []
-        # Add a welcome message from the bot
+        # Adiciona uma mensagem de boas-vindas do bot
         session['messages'].append({'sender': 'bot', 'text': "👋 Welcome to In-N-Out Ordering Chatbot! How can I assist you today?"})
 
-# Flask routes
-@app.route('/')
-def index():
-    session.clear()
-    session['order'] = {}
-    initialize_messages()
-    menu_items = get_menu_items()
-    index_html = '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>In-N-Out Chatbot</title>
-    </head>
-    <body>
-        <div style="text-align: center;">
-            <img src="{{ url_for('static', filename='InNOut_2021_logo.svg.png') }}" alt="In-N-Out Logo" width="200">
-            <h1>Welcome to In-N-Out!</h1>
-            <h2>Here's our menu:</h2>
-            <ul style="list-style-type: none;">
-                {% for item in menu %}
-                    <li>{{ item.name }}: {{ item.price }}</li>
-                {% endfor %}
-            </ul>
-            <a href="{{ url_for('chat') }}">Start Ordering</a>
-        </div>
-    </body>
-    </html>
-    '''
-    return render_template_string(index_html, menu=menu_items)
-
-
-@app.route('/chat', methods=['GET', 'POST'])
+# Rota Flask para o chatbot
+@app.route('/', methods=['GET', 'POST'])
 def chat():
     initialize_messages()
     response = ""
     if request.method == 'POST':
         if 'complete_order' in request.form:
-            return redirect(url_for('summary'))
+            if 'order' in session and session['order']:
+                # Gera o resumo do pedido
+                order_summary = "<h3>Your final order:</h3><ul style='list-style-type: none;'>"
+                total_price = 0
+                for item, details in session['order'].items():
+                    qty = details['quantity']
+                    additions = details.get('add', [])
+                    removals = details.get('remove', [])
+                    item_price = menu_dict[item] * qty
+                    total_price += item_price
+
+                    # Exibe o item com modificações
+                    item_display = f"{qty} x {item.title()}"
+                    modifications = []
+                    if additions:
+                        modifications.append("Add: " + ", ".join([add.title() for add in additions]))
+                    if removals:
+                        modifications.append("Remove: " + ", ".join([remove.title() for remove in removals]))
+                    if modifications:
+                        item_display += f" ({'; '.join(modifications)})"
+                    item_display += f" - ${item_price:.2f}"
+                    order_summary += f"<li>{item_display}</li>"
+                order_summary += f"</ul><h3>Total: ${total_price:.2f}</h3>"
+
+                # Adiciona o resumo do pedido como uma mensagem do bot
+                response += f"{order_summary}<p>🎉 Thank you for your order!</p>"
+                session['messages'].append({'sender': 'bot', 'text': response})
+                # Limpa a sessão para reiniciar para um novo pedido
+                session.pop('order', None)
+            else:
+                response += "❓ You haven't ordered anything yet."
+                session['messages'].append({'sender': 'bot', 'text': response})
         elif 'message' in request.form and request.form['message'].strip() != '':
             user_input = request.form['message']
             user_input_lower = user_input.lower()
-            # Add user's message to the chat history
+            # Adiciona a mensagem do usuário ao histórico de chat
             session['messages'].append({'sender': 'user', 'text': user_input})
 
-            # Determine the type of request
+            # Determina o tipo de solicitação
             if any(word in user_input_lower for word in ['remove', 'cancel']):
-                # Handle item removal
+                # Lida com a remoção de itens
                 removal_items = parse_removal(user_input)
                 bot_response = handle_removal(removal_items)
             elif any(word in user_input_lower for word in ['ingredient', 'ingredients', 'what\'s in', 'contains', 'have']):
-                # Handle ingredient-related queries
+                # Lida com consultas sobre ingredientes
                 ingredient_response = handle_ingredient_query(user_input_lower)
                 bot_response = ingredient_response
             else:
-                # Handle order and modifications
-                # Parse the order
+                # Lida com pedidos e modificações
+                # Parseia o pedido
                 parsed_order, parsed_total = parse_order(user_input)
 
-                # Parse modifications based on the current user input
+                # Parseia modificações com base na entrada do usuário
                 modifications = parse_modifications(user_input, parsed_order)
 
-                # Determine if there are modifications
+                # Determina se há modificações
                 has_modifications = bool(modifications)
 
-                # Handle additions
+                # Lida com adições
                 addition_response = handle_addition(parsed_order, has_modifications)
 
                 if has_modifications:
-                    # Handle modifications
+                    # Lida com modificações
                     modification_response = handle_modifications(modifications)
-                    # Combine responses without the initial addition message
+                    # Combina respostas sem a mensagem inicial de adição
                     bot_response = modification_response
                 else:
                     bot_response = addition_response
 
-            # Add bot's response to the chat history
+            # Adiciona a resposta do bot ao histórico de chat
             session['messages'].append({'sender': 'bot', 'text': bot_response})
         else:
-            # Add a prompt message if the user didn't enter anything
+            # Adiciona uma mensagem de prompt se o usuário não digitou nada
             session['messages'].append({'sender': 'bot', 'text': "❓ Please enter a message."})
 
     menu_items = get_menu_items()
@@ -470,7 +454,7 @@ def chat():
                 border: 1px solid #ccc;
                 border-radius: 10px;
                 padding: 10px;
-                height: 400px;
+                height: 500px;
                 overflow-y: scroll;
                 background-color: #fff;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -571,108 +555,16 @@ def chat():
             </div>
         </div>
         <script>
-            // Auto-scroll to the bottom of the chat box
-            var chatBox = document.getElementById('chat-box');
-            chatBox.scrollTop = chatBox.scrollHeight;
+            // Auto-scroll para o fundo do chat sempre que a página for carregada
+            window.onload = function() {
+                var chatBox = document.getElementById('chat-box');
+                chatBox.scrollTop = chatBox.scrollHeight;
+            };
         </script>
     </body>
     </html>
     '''
     return render_template_string(chat_html, messages=session['messages'], menu=menu_items)
-
-
-@app.route('/summary')
-def summary():
-    if 'order' not in session or not session['order']:
-        menu_items = get_menu_items()
-        # Add a message indicating no order has been made
-        session['messages'].append({'sender': 'bot', 'text': "❓ You haven't ordered anything yet."})
-        return render_template_string('''
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Order Summary</title>
-                <style>
-                    body { font-family: Arial, sans-serif; background-color: #f2f2f2; }
-                    .container { max-width: 800px; margin: auto; padding: 20px; text-align: center; }
-                    .menu ul { list-style-type: none; padding: 0; }
-                    .menu li { padding: 5px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <img src="{{ url_for('static', filename='InNOut_2021_logo.svg.png') }}" alt="In-N-Out Logo" width="200">
-                    <h1>You haven't ordered anything yet.</h1>
-                    <a href="{{ url_for('chat') }}">Go back to order</a>
-                    <div class="menu">
-                        <h2>Menu:</h2>
-                        <ul>
-                            {% for item in menu %}
-                                <li>{{ item.name }}: {{ item.price }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </body>
-            </html>
-        ''', menu=menu_items)
-    else:
-        order_summary = "<h3>Your final order:</h3><ul style='list-style-type: none;'>"
-        total_price = 0
-        for item, details in session['order'].items():
-            qty = details['quantity']
-            additions = details.get('add', [])
-            removals = details.get('remove', [])
-            item_price = menu_dict[item] * qty
-            total_price += item_price
-
-            # Display item with modifications
-            item_display = f"{qty} x {item.title()}"
-            modifications = []
-            if additions:
-                modifications.append("Add: " + ", ".join([add.title() for add in additions]))
-            if removals:
-                modifications.append("Remove: " + ", ".join([remove.title() for remove in removals]))
-            if modifications:
-                item_display += f" ({'; '.join(modifications)})"
-            item_display += f" - ${item_price:.2f}"
-            order_summary += f"<li>{item_display}</li>"
-        order_summary += f"</ul><h3>Total: ${total_price:.2f}</h3>"
-
-        menu_items = get_menu_items()
-        # Add a thank you message to the chat history
-        session['messages'].append({'sender': 'bot', 'text': "🎉 Thank you for your order!"})
-        session.clear()
-        return render_template_string('''
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Order Summary</title>
-                <style>
-                    body { font-family: Arial, sans-serif; background-color: #f2f2f2; }
-                    .container { max-width: 800px; margin: auto; padding: 20px; text-align: center; }
-                    .menu ul { list-style-type: none; padding: 0; }
-                    .menu li { padding: 5px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <img src="{{ url_for('static', filename='InNOut_2021_logo.svg.png') }}" alt="In-N-Out Logo" width="200">
-                    {{ order_summary|safe }}
-                    <p>🎉 Thank you for your order!</p>
-                    <a href="{{ url_for('index') }}">Start a new order</a>
-                    <div class="menu">
-                        <h2>Menu:</h2>
-                        <ul>
-                            {% for item in menu %}
-                                <li>{{ item.name }}: {{ item.price }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </body>
-            </html>
-        ''', order_summary=order_summary, menu=menu_items)
 
 
 if __name__ == '__main__':
