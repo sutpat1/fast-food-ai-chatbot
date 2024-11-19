@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, session, redirect, url_for
+rom flask import Flask, request, render_template_string, session, redirect, url_for
 import spacy
 import pandas as pd
 import re
@@ -446,7 +446,7 @@ def chat():
             removal_intents = ['remove', 'cancel', 'delete', 'discard', 'dont want']
 
             # Define cancellation intents for entire order
-            cancellation_intents = ['cancel my order', 'remove entire order', 'clear my order', 'discard my order', 'cancel order', 'remove all', 'clear order', 'discard order']
+            cancellation_intents = ['cancel my order', 'remove entire order', 'clear my order', 'discard my order', 'cancel order', 'remove all', 'clear order', 'discard order', 'delete my order', 'remove my order', 'trash my order', 'delete it all', 'remove it all']
 
             # **New Condition to Handle Cancellation of Entire Order**
             if any(cancel_phrase in user_input_lower for cancel_phrase in cancellation_intents):
