@@ -4,7 +4,7 @@ import pandas as pd
 import re
 
 app = Flask(__name__)
-app.secret_key = 'your_secure_secret_key_here'
+app.secret_key = 'secure_secret_key'
 
 # Load the spaCy model for NLP processing
 nlp = spacy.load('en_core_web_sm')
