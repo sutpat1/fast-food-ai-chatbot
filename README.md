@@ -1,5 +1,6 @@
 # CapstoneChatBot
-This program is a chatbot for ordering at a fast food restaurant.
+This program is a chatbot for ordering at In-N-Out, a fast food restaurant.
+It utilizes natural language processing and large language models to deliver a proper customer product.
 
 ### Libraries
 Install the required libraries with the following commands:
