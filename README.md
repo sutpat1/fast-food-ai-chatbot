@@ -52,21 +52,22 @@ A conversational AI chatbot built using **Flask**, **spaCy**, and **Natural Lang
 
    ```bash
    git clone https://github.com/yourusername/in-n-out-chatbot.git
-   cd in-n-out-chatbot```
+   cd in-n-out-chatbot
 
 2. Install dependencies
+   
    ```bash
    pip install flask spacy pandas
-   python -m spacy download en_core_web_sm```
+   python -m spacy download en_core_web_sm
    
 
-Set up the environment
-bash# Optional: Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+3. Set up the environment
+   ```bash# Optional: Create and activate a virtual environment
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-Run the application
-bashpython main.py
+4. Run the application
+   ```bashpython main.py```
 
-Open http://localhost:5000 with your browser to start using the chatbot.
+5. Open http://localhost:5000 with your browser to start using the chatbot.
 
