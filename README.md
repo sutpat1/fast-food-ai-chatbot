@@ -68,7 +68,8 @@ A conversational AI chatbot built using **Flask**, **spaCy**, and **Natural Lang
 
 4. Run the application
    ```bash
-   python main.py```
+   python main.py
+   ```
    
 6. Open http://localhost:5000 with your browser to start using the chatbot.
 
