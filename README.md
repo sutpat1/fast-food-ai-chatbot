@@ -61,13 +61,14 @@ A conversational AI chatbot built using **Flask**, **spaCy**, and **Natural Lang
    python -m spacy download en_core_web_sm
 
 3. Set up the environment
-   ```bash# Optional: Create and activate a virtual environment
+   ```bash
+   # Optional: Create and activate a virtual environment
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 4. Run the application
    ```bashpython main.py```
-
+   
 5. Open http://localhost:5000 with your browser to start using the chatbot.
 
 ---
