@@ -59,7 +59,6 @@ A conversational AI chatbot built using **Flask**, **spaCy**, and **Natural Lang
    ```bash
    pip install flask spacy pandas
    python -m spacy download en_core_web_sm
-   
 
 3. Set up the environment
    ```bash# Optional: Create and activate a virtual environment
@@ -71,3 +70,62 @@ A conversational AI chatbot built using **Flask**, **spaCy**, and **Natural Lang
 
 5. Open http://localhost:5000 with your browser to start using the chatbot.
 
+## 🗣️ Usage Examples
+
+**Placing an Order**
+- "I'd like a cheeseburger and a medium drink"
+- "Can I get two hamburgers with fries"
+
+**Modifying Orders**
+- "Add extra cheese to my hamburger"
+- "No onions on my cheeseburger please"
+
+**Removing Items**
+- "Remove the fries from my order"
+- "I don't want the shake anymore"
+
+**Checking Ingredients**
+- "What's in the cheeseburger?"
+- "Does the hamburger have tomatoes?"
+
+**Managing Orders**
+- "Show me my order"
+- "Cancel my entire order"
+- "Complete my order"
+
+---
+
+## 💡 NLP Capabilities
+
+The chatbot uses advanced natural language processing to:
+
+* **Entity Recognition**: Identifies menu items and quantities in natural language
+* **Intent Classification**: Understands if the user wants to add, remove, or modify items
+* **Context Awareness**: Maintains order state throughout the conversation
+* **Lemmatization**: Processes word variations to improve understanding (e.g., "fries" and "french fries")
+* **Numerical Recognition**: Handles both written numbers ("two") and digits ("2")
+
+---
+
+## 🔧 Customization
+
+To adapt this chatbot for other restaurants or use cases:
+
+* Replace the `In N Out Menu.csv` with your own menu data
+* Modify the spaCy processing logic in `main.py` for domain-specific language
+* Customize the HTML template and CSS styling for your brand
+* Add new intents and entity types for additional features
+
+---
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+---
+
+## 🤝 Acknowledgements
+
+* spaCy team for the excellent NLP library
+* Flask for the lightweight web framework
+* In-N-Out Burger for menu inspiration
