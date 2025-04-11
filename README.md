@@ -67,9 +67,10 @@ A conversational AI chatbot built using **Flask**, **spaCy**, and **Natural Lang
    source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 4. Run the application
-   ```bashpython main.py```
+   ```bash
+   python main.py```
    
-5. Open http://localhost:5000 with your browser to start using the chatbot.
+6. Open http://localhost:5000 with your browser to start using the chatbot.
 
 ---
 
