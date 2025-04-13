@@ -123,6 +123,16 @@ To adapt this chatbot for other restaurants or use cases:
 
 ---
 
+## 👥 Contributors
+
+This application was developed by a team of five developers:
+- [Sharv Utpat](https://github.com/sutpat1)
+- [Suraj Namburi](https://github.com/SurajNamburi)
+- [Alex Trevino](https://github.com/alexhdz14)
+- [Hari Ramalingam]()
+
+---
+
 ## 📄 License
 
 This project is open source and available under the MIT License.
