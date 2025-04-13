@@ -125,7 +125,7 @@ To adapt this chatbot for other restaurants or use cases:
 
 ## 👥 Contributors
 
-This application was developed by a team of five developers:
+This application was developed by a team of four developers:
 - [Sharv Utpat](https://github.com/sutpat1)
 - [Suraj Namburi](https://github.com/SurajNamburi)
 - [Alex Trevino](https://github.com/alexhdz14)
